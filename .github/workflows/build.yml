@@ -50,9 +50,16 @@ jobs:
             chmod +x "$f" 2>/dev/null || true
           done
           tag="dev-$(date +%Y%m%d%H%M)"
-          gh release create "$tag" --title "Development Build $tag" --notes "Automated dev build" -d
+          gh release create "$tag" --title "Development Build $tag" --notes "Automated dev build"
           for dir in */; do
             name="${dir%/}"
-            tar -czf "${name}.tar.gz" -C "$dir" bin
-            gh release upload "$tag" "${name}.tar.gz" --clobber
+            if [[ "$name" == *"darwin"* || "$name" == *"windows"* ]]; then
+              ext="zip"
+              zip -r "${name}.zip" bin
+              gh release upload "$tag" "${name}.${ext}" --clobber
+            else
+              ext="tar.gz"
+              tar -czf "${name}.tar.gz" -C "$dir" bin
+              gh release upload "$tag" "${name}.${ext}" --clobber
+            fi
           done
