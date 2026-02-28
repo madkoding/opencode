@@ -192,12 +192,8 @@ for (const item of targets) {
   await $`rm -rf ./dist/${name}/bin/tui`
   await $`cp ./bin/opencode ./dist/${name}/bin/opencode`
 
-  // For baseline builds, also create a Node.js-compatible bundle
-  if (item.avx2 === false) {
-    const nodeOutfile = `./dist/${name}/bin/opencode-node.js`
-    await $`bun build ./src/index.ts --target=node --outfile=${nodeOutfile} --format=cjs`
-    await $`chmod +x ${nodeOutfile}`
-  }
+  // Note: Node.js fallback for baseline builds skipped - bun build --target=node doesn't support top-level await
+  // The launcher will try to use the Bun binary which may not work on older CPUs
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
       {
