@@ -205,7 +205,7 @@ for (const item of targets) {
   binaries[name] = Script.version
 }
 
-if (Script.release) {
+if (Script.release && process.env.CI !== "true") {
   for (const key of Object.keys(binaries)) {
     await $`tar -czf ../../${key}.tar.gz *`.cwd(`dist/${key}/bin`)
   }
