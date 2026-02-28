@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,3 +31,25 @@ jobs:
         with:
           name: opencode-binaries
           path: packages/opencode/dist
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: opencode-binaries
+          path: dist
+
+      - name: Create Release
+        run: |
+          cd dist
+          for f in */bin/*; do
+            chmod +x "$f"
+          done
+          tag="dev-$(date +%Y%m%d%H%M)"
+          gh release create "$tag" --title "Development Build $tag" --notes "Automated dev build" -d
+          for dir in */; do
+            name="${dir%/}"
+            tar -czf "${name}.tar.gz" -C "$dir" bin
+            gh release upload "$tag" "${name}.tar.gz"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
