@@ -1,5 +1,6 @@
 import { batch, createMemo } from "solid-js"
 import { createStore, produce, reconcile } from "solid-js/store"
+import { cmp } from "@opencode-ai/util/fn"
 import { Binary } from "@opencode-ai/util/binary"
 import { retry } from "@opencode-ai/util/retry"
 import { createSimpleContext } from "@opencode-ai/ui/context"
@@ -22,8 +23,6 @@ function runInflight(map: Map<string, Promise<void>>, key: string, task: () => P
 }
 
 const keyFor = (directory: string, id: string) => `${directory}\n${id}`
-
-const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
 type OptimisticStore = {
   message: Record<string, Message[] | undefined>

@@ -1,3 +1,4 @@
+import { cmp } from "@opencode-ai/util/fn"
 import type {
   Config,
   OpencodeClient,
@@ -180,7 +181,7 @@ function createGlobalSync() {
         const nonArchived = (x.data ?? [])
           .filter((s) => !!s?.id)
           .filter((s) => !s.time?.archived)
-          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .sort((a, b) => cmp(a.id, b.id))
         const limit = store.limit
         const childSessions = store.session.filter((s) => !!s.parentID)
         const sessions = trimSessions([...nonArchived, ...childSessions], {

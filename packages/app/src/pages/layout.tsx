@@ -39,6 +39,7 @@ import { clearWorkspaceTerminals } from "@/context/terminal"
 import { useNotification } from "@/context/notification"
 import { usePermission } from "@/context/permission"
 import { Binary } from "@opencode-ai/util/binary"
+import { cmp } from "@opencode-ai/util/fn"
 import { retry } from "@opencode-ai/util/retry"
 import { playSound, soundSrc } from "@/utils/sound"
 import { createAim } from "@/utils/aim"
@@ -57,6 +58,7 @@ import { Titlebar } from "@/components/titlebar"
 import { useServer } from "@/context/server"
 import { useLanguage, type Locale } from "@/context/language"
 import {
+  buildProjectMap,
   childMapByParent,
   displayName,
   errorMessage,
@@ -582,10 +584,10 @@ export default function Layout(props: ParentProps) {
   createEffect(() => {
     if (!pageReady()) return
     if (!layoutReady()) return
-    const projects = layout.projects.list()
+    const projectMap = buildProjectMap(layout.projects.list())
     for (const [directory, expanded] of Object.entries(store.workspaceExpanded)) {
       if (!expanded) continue
-      const project = projects.find((item) => item.worktree === directory || item.sandboxes?.includes(directory))
+      const project = projectMap.get(directory)
       if (!project) continue
       if (project.vcs === "git" && layout.sidebar.workspaces(project.worktree)()) continue
       setStore("workspaceExpanded", directory, false)
@@ -676,7 +678,7 @@ export default function Layout(props: ParentProps) {
 
   const mergeByID = <T extends { id: string }>(current: T[], incoming: T[]) => {
     if (current.length === 0) {
-      return incoming.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      return incoming.slice().sort((a, b) => cmp(a.id, b.id))
     }
 
     const map = new Map<string, T>()
@@ -686,7 +688,7 @@ export default function Layout(props: ParentProps) {
     for (const item of incoming) {
       map.set(item.id, item)
     }
-    return [...map.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    return [...map.values()].sort((a, b) => cmp(a.id, b.id))
   }
 
   async function prefetchMessages(directory: string, sessionID: string, token: number) {
