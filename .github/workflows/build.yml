@@ -42,14 +42,12 @@ jobs:
         run: |
           cd dist
           for f in */bin/*; do
-            chmod +x "$f"
+            chmod +x "$f" 2>/dev/null || true
           done
           tag="dev-$(date +%Y%m%d%H%M)"
           gh release create "$tag" --title "Development Build $tag" --notes "Automated dev build" -d
           for dir in */; do
             name="${dir%/}"
             tar -czf "${name}.tar.gz" -C "$dir" bin
-            gh release upload "$tag" "${name}.tar.gz"
+            gh release upload "$tag" "${name}.tar.gz" --clobber
           done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
