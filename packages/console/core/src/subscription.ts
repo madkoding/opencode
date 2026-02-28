@@ -3,6 +3,23 @@ import { fn } from "./util/fn"
 import { centsToMicroCents } from "./util/price"
 import { getWeekBounds, getMonthlyBounds } from "./util/date"
 
+function analyzeUsageAt(limitInCents: number, usage: number, periodEnd: Date) {
+  const now = new Date()
+  const limitInMicroCents = centsToMicroCents(limitInCents)
+  if (usage < limitInMicroCents) {
+    return {
+      status: "ok" as const,
+      resetInSec: Math.ceil((periodEnd.getTime() - now.getTime()) / 1000),
+      usagePercent: Math.floor(Math.min(100, (usage / limitInMicroCents) * 100)),
+    }
+  }
+  return {
+    status: "rate-limited" as const,
+    resetInSec: Math.ceil((periodEnd.getTime() - now.getTime()) / 1000),
+    usagePercent: 100,
+  }
+}
+
 export namespace Subscription {
   export const analyzeRollingUsage = fn(
     z.object({
@@ -14,7 +31,7 @@ export namespace Subscription {
     ({ limit, window, usage, timeUpdated }) => {
       const now = new Date()
       const rollingWindowMs = window * 3600 * 1000
-      const rollingLimitInMicroCents = centsToMicroCents(limit * 100)
+      const rollingLimitInCents = limit * 100
       const windowStart = new Date(now.getTime() - rollingWindowMs)
       if (timeUpdated < windowStart) {
         return {
@@ -25,18 +42,7 @@ export namespace Subscription {
       }
 
       const windowEnd = new Date(timeUpdated.getTime() + rollingWindowMs)
-      if (usage < rollingLimitInMicroCents) {
-        return {
-          status: "ok" as const,
-          resetInSec: Math.ceil((windowEnd.getTime() - now.getTime()) / 1000),
-          usagePercent: Math.floor(Math.min(100, (usage / rollingLimitInMicroCents) * 100)),
-        }
-      }
-      return {
-        status: "rate-limited" as const,
-        resetInSec: Math.ceil((windowEnd.getTime() - now.getTime()) / 1000),
-        usagePercent: 100,
-      }
+      return analyzeUsageAt(rollingLimitInCents, usage, windowEnd)
     },
   )
 
@@ -49,7 +55,6 @@ export namespace Subscription {
     ({ limit, usage, timeUpdated }) => {
       const now = new Date()
       const week = getWeekBounds(now)
-      const fixedLimitInMicroCents = centsToMicroCents(limit * 100)
       if (timeUpdated < week.start) {
         return {
           status: "ok" as const,
@@ -57,19 +62,7 @@ export namespace Subscription {
           usagePercent: 0,
         }
       }
-      if (usage < fixedLimitInMicroCents) {
-        return {
-          status: "ok" as const,
-          resetInSec: Math.ceil((week.end.getTime() - now.getTime()) / 1000),
-          usagePercent: Math.floor(Math.min(100, (usage / fixedLimitInMicroCents) * 100)),
-        }
-      }
-
-      return {
-        status: "rate-limited" as const,
-        resetInSec: Math.ceil((week.end.getTime() - now.getTime()) / 1000),
-        usagePercent: 100,
-      }
+      return analyzeUsageAt(limit * 100, usage, week.end)
     },
   )
 
@@ -83,7 +76,6 @@ export namespace Subscription {
     ({ limit, usage, timeUpdated, timeSubscribed }) => {
       const now = new Date()
       const month = getMonthlyBounds(now, timeSubscribed)
-      const fixedLimitInMicroCents = centsToMicroCents(limit * 100)
       if (timeUpdated < month.start) {
         return {
           status: "ok" as const,
@@ -91,19 +83,7 @@ export namespace Subscription {
           usagePercent: 0,
         }
       }
-      if (usage < fixedLimitInMicroCents) {
-        return {
-          status: "ok" as const,
-          resetInSec: Math.ceil((month.end.getTime() - now.getTime()) / 1000),
-          usagePercent: Math.floor(Math.min(100, (usage / fixedLimitInMicroCents) * 100)),
-        }
-      }
-
-      return {
-        status: "rate-limited" as const,
-        resetInSec: Math.ceil((month.end.getTime() - now.getTime()) / 1000),
-        usagePercent: 100,
-      }
+      return analyzeUsageAt(limit * 100, usage, month.end)
     },
   )
 }

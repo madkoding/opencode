@@ -3,8 +3,8 @@ import { lazy } from "@opencode-ai/util/lazy"
 
 export namespace Storage {
   export interface Adapter {
-    read(path: string): Promise<string | undefined>
-    write(path: string, value: string): Promise<void>
+    read(path: string): Promise<{ value: string; etag?: string } | undefined>
+    write(path: string, value: string, options?: { ifMatch?: string }): Promise<void>
     remove(path: string): Promise<void>
     list(options?: { prefix?: string; limit?: number; after?: string; before?: string }): Promise<string[]>
   }
@@ -12,21 +12,28 @@ export namespace Storage {
   function createAdapter(client: AwsClient, endpoint: string, bucket: string): Adapter {
     const base = `${endpoint}/${bucket}`
     return {
-      async read(path: string): Promise<string | undefined> {
+      async read(path: string): Promise<{ value: string; etag?: string } | undefined> {
         const response = await client.fetch(`${base}/${path}`)
         if (response.status === 404) return undefined
         if (!response.ok) throw new Error(`Failed to read ${path}: ${response.status}`)
-        return response.text()
+        const value = await response.text()
+        const etag = response.headers.get("ETag") ?? undefined
+        return { value, etag }
       },
 
-      async write(path: string, value: string): Promise<void> {
+      async write(path: string, value: string, options?: { ifMatch?: string }): Promise<void> {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        if (options?.ifMatch) {
+          headers["If-Match"] = options.ifMatch
+        }
         const response = await client.fetch(`${base}/${path}`, {
           method: "PUT",
           body: value,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
         })
+        if (response.status === 412) throw new Error("Conflict: version mismatch")
         if (!response.ok) throw new Error(`Failed to write ${path}: ${response.status}`)
       },
 
@@ -97,7 +104,7 @@ export namespace Storage {
   export async function read<T>(key: string[]) {
     const result = await adapter().read(resolve(key))
     if (!result) return undefined
-    return JSON.parse(result) as T
+    return JSON.parse(result.value) as T
   }
 
   export function write<T>(key: string[], value: T) {
@@ -119,11 +126,25 @@ export namespace Storage {
     return result.map((x) => x.replace(/\.json$/, "").split("/"))
   }
 
-  export async function update<T>(key: string[], fn: (draft: T) => void) {
-    const val = await read<T>(key)
-    if (!val) throw new Error("Not found")
-    fn(val)
-    await write(key, val)
-    return val
+  export async function update<T extends { _v?: number }>(key: string[], fn: (draft: T) => void, retries = 3) {
+    const path = resolve(key)
+    for (let i = 0; i < retries; i++) {
+      const result = await adapter().read(path)
+      if (!result) throw new Error("Not found")
+      const val = JSON.parse(result.value) as T
+      const oldVersion = val._v ?? 0
+      fn(val)
+      val._v = oldVersion + 1
+      try {
+        await adapter().write(path, JSON.stringify(val), { ifMatch: result.etag })
+        return val
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("Conflict") && i < retries - 1) {
+          continue
+        }
+        throw err
+      }
+    }
+    throw new Error("Failed to update after retries")
   }
 }
