@@ -19,9 +19,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y zip
-          bun install
+        run: bun install
 
       - name: Build CLI
         run: |
