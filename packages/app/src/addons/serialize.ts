@@ -466,14 +466,16 @@ class StringSerializeHandler extends BaseSerializeHandler {
       this._lastCursorRow = this._lastContentCursorRow
     }
 
-    let content = ""
+    const parts: string[] = []
 
     for (let i = 0; i < rowEnd; i++) {
-      content += this._allRows[i]
+      parts.push(this._allRows[i])
       if (i + 1 < rowEnd) {
-        content += this._allRowSeparators[i]
+        parts.push(this._allRowSeparators[i])
       }
     }
+
+    let content = parts.join("")
 
     if (excludeFinalCursorPosition) return content
 

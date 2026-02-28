@@ -1,11 +1,26 @@
 import { getFilename } from "@opencode-ai/util/path"
-import { type Session } from "@opencode-ai/sdk/v2/client"
+import { cmp } from "@opencode-ai/util/fn"
+import { type Session, type Project } from "@opencode-ai/sdk/v2/client"
 
 export const workspaceKey = (directory: string) => {
   const drive = directory.match(/^([A-Za-z]:)[\\/]+$/)
   if (drive) return `${drive[1]}${directory.includes("\\") ? "\\" : "/"}`
   if (/^[\\/]+$/.test(directory)) return directory.includes("\\") ? "\\" : "/"
   return directory.replace(/[\\/]+$/, "")
+}
+
+type ProjectLike = { id?: string; worktree: string; sandboxes?: string[] }
+
+export function buildProjectMap<T extends ProjectLike>(projects: T[]) {
+  const map = new Map<string, T>()
+  for (const p of projects) {
+    if (!p.id) continue
+    map.set(p.worktree, p)
+    for (const dir of p.sandboxes ?? []) {
+      map.set(dir, p)
+    }
+  }
+  return map
 }
 
 export function sortSessions(now: number) {
@@ -15,7 +30,7 @@ export function sortSessions(now: number) {
     const bUpdated = b.time.updated ?? b.time.created
     const aRecent = aUpdated > oneMinuteAgo
     const bRecent = bUpdated > oneMinuteAgo
-    if (aRecent && bRecent) return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+    if (aRecent && bRecent) return cmp(a.id, b.id)
     if (aRecent && !bRecent) return -1
     if (!aRecent && bRecent) return 1
     return bUpdated - aUpdated

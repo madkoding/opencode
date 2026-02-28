@@ -1,6 +1,6 @@
+import { cmp } from "@opencode-ai/util/fn"
+export { cmp }
 import type { Project, ProviderListResponse } from "@opencode-ai/sdk/v2/client"
-
-export const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
 export function normalizeProviderList(input: ProviderListResponse): ProviderListResponse {
   return {
