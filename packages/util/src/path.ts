@@ -1,21 +1,20 @@
 export function getFilename(path: string | undefined) {
   if (!path) return ""
-  const trimmed = path.replace(/[\/\\]+$/, "")
-  const parts = trimmed.split(/[\/\\]/)
-  return parts[parts.length - 1] ?? ""
+  const lastSlash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
+  return lastSlash === -1 ? path : path.slice(lastSlash + 1)
 }
 
 export function getDirectory(path: string | undefined) {
   if (!path) return ""
   const trimmed = path.replace(/[\/\\]+$/, "")
-  const parts = trimmed.split(/[\/\\]/)
-  return parts.slice(0, parts.length - 1).join("/") + "/"
+  const lastSlash = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"))
+  return lastSlash === -1 ? "" : trimmed.slice(0, lastSlash + 1)
 }
 
 export function getFileExtension(path: string | undefined) {
   if (!path) return ""
-  const parts = path.split(".")
-  return parts[parts.length - 1]
+  const lastDot = path.lastIndexOf(".")
+  return lastDot === -1 ? "" : path.slice(lastDot + 1)
 }
 
 export function getFilenameTruncated(path: string | undefined, maxLength: number = 20) {

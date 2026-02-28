@@ -26,34 +26,32 @@ export function formatTranscript(
   messages: MessageWithParts[],
   options: TranscriptOptions,
 ): string {
-  let transcript = `# ${session.title}\n\n`
-  transcript += `**Session ID:** ${session.id}\n`
-  transcript += `**Created:** ${new Date(session.time.created).toLocaleString()}\n`
-  transcript += `**Updated:** ${new Date(session.time.updated).toLocaleString()}\n\n`
-  transcript += `---\n\n`
+  const lines = [
+    `# ${session.title}`,
+    "",
+    `**Session ID:** ${session.id}`,
+    `**Created:** ${new Date(session.time.created).toLocaleString()}`,
+    `**Updated:** ${new Date(session.time.updated).toLocaleString()}`,
+    "",
+    "---",
+    "",
+  ]
 
   for (const msg of messages) {
-    transcript += formatMessage(msg.info, msg.parts, options)
-    transcript += `---\n\n`
+    lines.push(formatMessage(msg.info, msg.parts, options), "---", "")
   }
 
-  return transcript
+  return lines.join("\n")
 }
 
 export function formatMessage(msg: UserMessage | AssistantMessage, parts: Part[], options: TranscriptOptions): string {
-  let result = ""
-
-  if (msg.role === "user") {
-    result += `## User\n\n`
-  } else {
-    result += formatAssistantHeader(msg, options.assistantMetadata)
-  }
+  const parts_ = [msg.role === "user" ? "## User" : formatAssistantHeader(msg, options.assistantMetadata)]
 
   for (const part of parts) {
-    result += formatPart(part, options)
+    parts_.push(formatPart(part, options))
   }
 
-  return result
+  return parts_.join("")
 }
 
 export function formatAssistantHeader(msg: AssistantMessage, includeMetadata: boolean): string {
@@ -80,18 +78,18 @@ export function formatPart(part: Part, options: TranscriptOptions): string {
   }
 
   if (part.type === "tool") {
-    let result = `**Tool: ${part.tool}**\n`
+    const lines = [`**Tool: ${part.tool}**`]
     if (options.toolDetails && part.state.input) {
-      result += `\n**Input:**\n\`\`\`json\n${JSON.stringify(part.state.input, null, 2)}\n\`\`\`\n`
+      lines.push("", "**Input:**", "```json", JSON.stringify(part.state.input, null, 2), "```")
     }
     if (options.toolDetails && part.state.status === "completed" && part.state.output) {
-      result += `\n**Output:**\n\`\`\`\n${part.state.output}\n\`\`\`\n`
+      lines.push("", "**Output:**", "```", part.state.output, "```")
     }
     if (options.toolDetails && part.state.status === "error" && part.state.error) {
-      result += `\n**Error:**\n\`\`\`\n${part.state.error}\n\`\`\`\n`
+      lines.push("", "**Error:**", "```", part.state.error, "```")
     }
-    result += `\n`
-    return result
+    lines.push("")
+    return lines.join("\n")
   }
 
   return ""

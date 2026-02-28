@@ -81,11 +81,11 @@ export const ListTool = Tool.define("list", {
     }
 
     function renderDir(dirPath: string, depth: number): string {
+      const lines: string[] = []
       const indent = "  ".repeat(depth)
-      let output = ""
 
       if (depth > 0) {
-        output += `${indent}${path.basename(dirPath)}/\n`
+        lines.push(`${indent}${path.basename(dirPath)}/`)
       }
 
       const childIndent = "  ".repeat(depth + 1)
@@ -95,19 +95,19 @@ export const ListTool = Tool.define("list", {
 
       // Render subdirectories first
       for (const child of children) {
-        output += renderDir(child, depth + 1)
+        lines.push(renderDir(child, depth + 1))
       }
 
       // Render files
       const files = filesByDir.get(dirPath) || []
       for (const file of files.sort()) {
-        output += `${childIndent}${file}\n`
+        lines.push(`${childIndent}${file}`)
       }
 
-      return output
+      return lines.join("\n")
     }
 
-    const output = `${searchPath}/\n` + renderDir(".", 0)
+    const output = [searchPath + "/", renderDir(".", 0)].join("\n")
 
     return {
       title: path.relative(Instance.worktree, searchPath),

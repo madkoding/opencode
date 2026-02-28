@@ -10,7 +10,7 @@ process.chdir(dir)
 const pkg = (await import("../package.json").then((m) => m.default)) as {
   exports: Record<string, string | object>
 }
-const original = JSON.parse(JSON.stringify(pkg))
+const original = structuredClone(pkg)
 function transformExports(exports: Record<string, string | object>) {
   for (const [key, value] of Object.entries(exports)) {
     if (typeof value === "object" && value !== null) {

@@ -21,7 +21,7 @@ type Input = {
 export const pickVisibleId = (list: Visible[], line: number) => {
   if (list.length === 0) return
 
-  const sorted = [...list].sort((a, b) => {
+  const sorted = list.toSorted((a, b) => {
     if (b.ratio !== a.ratio) return b.ratio - a.ratio
 
     const da = Math.abs(a.top - line)
@@ -95,8 +95,8 @@ export const createScrollSpy = (input: Input) => {
     }
 
     const base = el.getBoundingClientRect().top
-    offset = [...node].map(([next, item]) => ({
-      id: next,
+    offset = Array.from(node.entries(), ([id, item]) => ({
+      id,
       top: item.getBoundingClientRect().top - base + el.scrollTop,
     }))
     offset.sort((a, b) => a.top - b.top)
@@ -110,7 +110,7 @@ export const createScrollSpy = (input: Input) => {
     const line = el.getBoundingClientRect().top + 100
     const next =
       pickVisibleId(
-        [...visible].map(([k, v]) => ({
+        Array.from(visible.entries(), ([k, v]) => ({
           id: k,
           ratio: v.ratio,
           top: v.top,

@@ -160,20 +160,17 @@ export namespace Patch {
   }
 
   function parseAddFileContent(lines: string[], startIdx: number): { content: string; nextIdx: number } {
-    let content = ""
+    const contentLines: string[] = []
     let i = startIdx
 
     while (i < lines.length && !lines[i].startsWith("***")) {
       if (lines[i].startsWith("+")) {
-        content += lines[i].substring(1) + "\n"
+        contentLines.push(lines[i].substring(1))
       }
       i++
     }
 
-    // Remove trailing newline
-    if (content.endsWith("\n")) {
-      content = content.slice(0, -1)
-    }
+    const content = contentLines.join("\n")
 
     return { content, nextIdx: i }
   }
@@ -492,7 +489,7 @@ export namespace Patch {
     const newLines = newContent.split("\n")
 
     // Simple diff generation - in a real implementation you'd use a proper diff algorithm
-    let diff = "@@ -1 +1 @@\n"
+    const diffLines = ["@@ -1 +1 @@"]
 
     // Find changes (simplified approach)
     const maxLen = Math.max(oldLines.length, newLines.length)
@@ -503,15 +500,15 @@ export namespace Patch {
       const newLine = newLines[i] || ""
 
       if (oldLine !== newLine) {
-        if (oldLine) diff += `-${oldLine}\n`
-        if (newLine) diff += `+${newLine}\n`
+        if (oldLine) diffLines.push(`-${oldLine}`)
+        if (newLine) diffLines.push(`+${newLine}`)
         hasChanges = true
       } else if (oldLine) {
-        diff += ` ${oldLine}\n`
+        diffLines.push(` ${oldLine}`)
       }
     }
 
-    return hasChanges ? diff : ""
+    return hasChanges ? diffLines.join("\n") + "\n" : ""
   }
 
   // Apply hunks to filesystem
