@@ -1,5 +1,17 @@
 import { BoxRenderable, TextareaRenderable, MouseEvent, PasteEvent, t, dim, fg } from "@opentui/core"
-import { createEffect, createMemo, type JSX, onMount, createSignal, onCleanup, on, Show, Switch, Match } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  type JSX,
+  onMount,
+  createSignal,
+  onCleanup,
+  on,
+  Show,
+  Switch,
+  Match,
+  batch,
+} from "solid-js"
 import "opentui-spinner/solid"
 import path from "path"
 import { Filesystem } from "@/util/filesystem"
@@ -62,6 +74,7 @@ export function Prompt(props: PromptProps) {
   let input: TextareaRenderable
   let anchor: BoxRenderable
   let autocomplete: AutocompleteRef
+  let contentChangeTimeout: ReturnType<typeof setTimeout> | undefined
 
   const keybind = useKeybind()
   const local = useLocal()
@@ -77,6 +90,12 @@ export function Prompt(props: PromptProps) {
   const renderer = useRenderer()
   const { theme, syntax } = useTheme()
   const kv = useKV()
+
+  onMount(() => {
+    onCleanup(() => {
+      if (contentChangeTimeout) clearTimeout(contentChangeTimeout)
+    })
+  })
 
   function promptModelWarning() {
     toast.show({
@@ -827,8 +846,11 @@ export function Prompt(props: PromptProps) {
               onContentChange={() => {
                 const value = input.plainText
                 setStore("prompt", "input", value)
-                autocomplete.onInput(value)
-                syncExtmarksWithPromptParts()
+                if (contentChangeTimeout) clearTimeout(contentChangeTimeout)
+                contentChangeTimeout = setTimeout(() => {
+                  autocomplete.onInput(value)
+                  syncExtmarksWithPromptParts()
+                }, 250)
               }}
               keyBindings={textareaKeybindings()}
               onKeyDown={async (e) => {

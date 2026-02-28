@@ -2,7 +2,17 @@ import type { BoxRenderable, TextareaRenderable, KeyEvent, ScrollBoxRenderable }
 import { pathToFileURL } from "bun"
 import fuzzysort from "fuzzysort"
 import { firstBy } from "remeda"
-import { createMemo, createResource, createEffect, onMount, onCleanup, Index, Show, createSignal } from "solid-js"
+import {
+  createMemo,
+  createResource,
+  createEffect,
+  onMount,
+  onCleanup,
+  Index,
+  Show,
+  createSignal,
+  batch,
+} from "solid-js"
 import { createStore } from "solid-js/store"
 import { useSDK } from "@tui/context/sdk"
 import { useSync } from "@tui/context/sync"
@@ -100,7 +110,7 @@ export function Autocomplete(props: {
           lastPos = { x: anchor.x, y: anchor.y, width: anchor.width }
           setPositionTick((t) => t + 1)
         }
-      }, 50)
+      }, 250)
 
       onCleanup(() => clearInterval(interval))
     }
