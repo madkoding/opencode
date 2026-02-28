@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build CLI
+        run: |
+          bun install
+          ./packages/opencode/script/build.ts
+        env:
+          OPENCODE_VERSION: "0.0.0-dev-$(date +%Y%m%d%H%M)"
+          OPENCODE_RELEASE: "dev"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencode-binaries
+          path: packages/opencode/dist
