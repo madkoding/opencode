@@ -25,6 +25,7 @@ jobs:
         env:
           OPENCODE_VERSION: "0.0.0-dev-$(date +%Y%m%d%H%M)"
           OPENCODE_RELEASE: "dev"
+          GH_REPO: ${{ github.repository }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
