@@ -66,9 +66,9 @@ function localeFromAcceptLanguage(header: string | null) {
         q: q ? Number.parseFloat(q) : 1,
       }
     })
-    .sort((a, b) => b.q - a.q)
+  const sorted = [...items].sort((a, b) => b.q - a.q)
 
-  const locale = items
+  const locale = sorted
     .map((item) => item.lang)
     .filter((lang) => lang && lang !== "*")
     .map((lang) => matchLocale(lang))
