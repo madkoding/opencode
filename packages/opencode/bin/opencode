@@ -156,6 +156,23 @@ function findBinary(startDir) {
     return localBinary
   }
 
+  // For baseline builds on Linux, use Node.js fallback if available
+  if (platform === "linux" && arch === "x64") {
+    const baselineCheck = (() => {
+      try {
+        return /(^|\s)avx2(\s|$)/i.test(fs.readFileSync("/proc/cpuinfo", "utf8"))
+      } catch {
+        return false
+      }
+    })()
+    if (!baselineCheck) {
+      const nodeFallback = path.join(scriptDir, "bin", "opencode-node.js")
+      if (fs.existsSync(nodeFallback)) {
+        return nodeFallback
+      }
+    }
+  }
+
   let current = startDir
   for (;;) {
     const modules = path.join(current, "node_modules")
