@@ -190,6 +190,7 @@ for (const item of targets) {
   })
 
   await $`rm -rf ./dist/${name}/bin/tui`
+  await $`cp ./bin/opencode ./dist/${name}/bin/opencode`
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
       {

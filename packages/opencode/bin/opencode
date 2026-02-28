@@ -150,6 +150,12 @@ const names = (() => {
 })()
 
 function findBinary(startDir) {
+  // First check if we're in a bundled distribution with local binary
+  const localBinary = path.join(scriptDir, "bin", binary)
+  if (fs.existsSync(localBinary)) {
+    return localBinary
+  }
+
   let current = startDir
   for (;;) {
     const modules = path.join(current, "node_modules")
