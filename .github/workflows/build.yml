@@ -11,8 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.value }}
     steps:
       - uses: actions/checkout@v4
+
+      - id: version
+        run: echo "value=dev-$(date +%Y%m%d%H%M)" >> $GITHUB_OUTPUT
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -25,7 +30,7 @@ jobs:
         run: |
           ./packages/opencode/script/build.ts
         env:
-          OPENCODE_VERSION: "0.0.0-dev-$(date +%Y%m%d%H%M)"
+          OPENCODE_VERSION: "0.0.0-${{ steps.version.outputs.value }}"
           OPENCODE_RELEASE: "dev"
           GH_REPO: ${{ github.repository }}
 
@@ -49,7 +54,7 @@ jobs:
           for f in */bin/*; do
             chmod +x "$f" 2>/dev/null || true
           done
-          tag="dev-$(date +%Y%m%d%H%M)"
+          tag="${{ steps.version.outputs.value }}"
           gh release create "$tag" --title "Development Build $tag" --notes "Automated dev build"
           for dir in */; do
             name="${dir%/}"
