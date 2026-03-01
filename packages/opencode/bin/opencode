@@ -50,7 +50,7 @@ if (!arch) {
   arch = os.arch()
 }
 const base = "opencode-" + platform + "-" + arch
-const binaryName = process.env.OPENCODE_DEV_BIN || "opencode"
+const binaryName = process.env.OPENCODE_DEV_BIN || "opencode-dev"
 const binary = platform === "windows" ? binaryName + ".exe" : binaryName
 
 const names = (() => {
@@ -82,9 +82,14 @@ const names = (() => {
 })()
 
 function findBinary(startDir) {
-  const localBinary = path.join(scriptDir, "bin", binary)
+  const localBinary = path.join(scriptDir, binary)
   if (fs.existsSync(localBinary)) {
     return localBinary
+  }
+
+  const localBinDir = path.join(scriptDir, "bin", binary)
+  if (fs.existsSync(localBinDir)) {
+    return localBinDir
   }
 
   let current = startDir

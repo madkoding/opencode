@@ -307,7 +307,7 @@ download_and_install() {
         unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
     fi
 
-    mv "$tmp_dir/bin/opencode" "$INSTALL_DIR"
+    mv "$tmp_dir/bin/opencode-dev" "$INSTALL_DIR/opencode"
     chmod 755 "${INSTALL_DIR}/opencode"
     rm -rf "$tmp_dir"
 }
