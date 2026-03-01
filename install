@@ -183,6 +183,9 @@ else
     if [ -z "$requested_version" ]; then
         url="https://github.com/madkoding/opencode/releases/latest/download/$filename"
         specific_version=$(curl -s https://api.github.com/repos/madkoding/opencode/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+        if [[ -z "$specific_version" ]]; then
+            specific_version=$(curl -s https://api.github.com/repos/madkoding/opencode/releases/latest | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
+        fi
 
         if [[ $? -ne 0 || -z "$specific_version" ]]; then
             echo -e "${RED}Failed to fetch version information${NC}"
