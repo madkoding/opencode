@@ -55,7 +55,7 @@ jobs:
             name="${dir%/}"
             if [[ "$name" == *"darwin"* || "$name" == *"windows"* ]]; then
               ext="zip"
-              zip -r "${name}.zip" bin
+              (cd "$dir" && zip -r "../${name}.zip" bin)
               gh release upload "$tag" "${name}.${ext}" --clobber
             else
               ext="tar.gz"
